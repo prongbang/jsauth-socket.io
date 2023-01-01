@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+
+<body>
+    <h1>Connect socket.io with Authorization</h1>
+    <div id="message"></div>
+    <script>
+
+        let message = document.querySelector('#message');
+
+        // Main namespace
+        var socket = io({
+            auth: {
+                token: "JWT"
+            },
+        });
+
+        socket.on("connect", () => {
+            console.log("connected:", socket.connected);
+        });
+
+        // Device namespace
+        const id = '1';
+        var deviceSocket = io("http://localhost:3000/device", {
+            auth: {
+                token: "JWT"
+            },
+        });
+
+        deviceSocket.on(`device/${id}`, function (payload) {
+            console.log("payload:", payload)
+
+            message.innerHTML += `<li>${JSON.stringify(payload)}</li>`;
+        });
+
+        deviceSocket.on("connect", () => {
+            console.log("connected:", deviceSocket.connected);
+
+            message.innerHTML += `<li>connected</li>`;
+
+            deviceSocket.emit("subscribe", id);
+        });
+
+        deviceSocket.on("disconnect", () => {
+            console.log("disconnect:", !deviceSocket.connected);
+        });
+
+        deviceSocket.on("reconnect", () => {
+            console.log("reconnect:", true);
+        });
+
+        deviceSocket.on("connect_error", (err) => {
+            console.log("error:", err instanceof Error);
+            console.log(err.message);
+        });
+
+    </script>
+</body>
+
+</html>
